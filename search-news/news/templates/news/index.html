@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSAFY 뉴스 검색기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        .search-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .search-container input {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background-color: #ffd700;
+            color: #333;
+        }
+
+        .btn-primary:hover {
+            background-color: #ffed4e;
+            transform: translateY(-2px);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-filter {
+            padding: 8px 16px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-filter.active {
+            background-color: white;
+            color: #667eea;
+            border-color: white;
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 180px);
+        }
+
+        .news-list {
+            width: 40%;
+            overflow-y: auto;
+            border-right: 2px solid #e0e0e0;
+            background-color: #f8f9fa;
+        }
+
+        .news-item {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            position: relative;
+        }
+
+        .news-item:hover {
+            background-color: #e9ecef;
+        }
+
+        .news-item.active {
+            background-color: #e7f3ff;
+            border-left: 4px solid #667eea;
+        }
+
+        .news-item h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bookmark-icon {
+            font-size: 20px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .bookmark-icon:hover {
+            transform: scale(1.2);
+        }
+
+        .bookmark-icon.bookmarked {
+            color: #ffd700;
+        }
+
+        .bookmark-icon:not(.bookmarked) {
+            color: #ccc;
+        }
+
+        .news-item p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .news-detail {
+            width: 60%;
+            padding: 30px;
+            overflow-y: auto;
+            background-color: white;
+        }
+
+        .news-detail h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .news-detail .pub-date {
+            color: #999;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .news-detail .description {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        .news-detail .link {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .news-detail .link:hover {
+            background-color: #5568d3;
+        }
+
+        .placeholder {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+            font-size: 16px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📰 SSAFY 뉴스 검색기</h1>
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="검색어를 입력하세요 (예: 인공지능, 금융, SSAFY)">
+            <button class="btn btn-primary" onclick="searchNews()">검색하기</button>
+        </div>
+        <div class="filter-buttons">
+            <button class="btn btn-filter active" onclick="filterNews('all')">전체 보기</button>
+            <button class="btn btn-filter" onclick="filterNews('bookmarked')">북마크 보기</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="news-list" id="newsList">
+            <div class="placeholder">
+                <p>👈 왼쪽에서 뉴스 검색어를 입력하여 뉴스를 검색해주세요.</p>
+            </div>
+        </div>
+        <div class="news-detail" id="newsDetail">
+            <div class="placeholder">
+                <p>뉴스를 선택하면 상세 내용이 여기에 표시됩니다.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        let currentFilter = 'all';
+        let currentNewsId = null;
+
+        // 페이지 로드 시 전체 뉴스 불러오기
+        window.onload = function() {
+            loadNewsList();
+        };
+
+        // 뉴스 검색
+        async function searchNews() {
+            const query = document.getElementById('searchInput').value.trim();
+
+            if (!query) {
+                alert('검색어를 입력해주세요!');
+                return;
+            }
+
+            try {
+                const response = await axios.post('/api/news/', { query: query });
+                alert(response.data.message);
+                loadNewsList();
+                document.getElementById('searchInput').value = '';
+            } catch (error) {
+                console.error('Error:', error);
+                alert('뉴스 검색 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 뉴스 목록 불러오기
+        async function loadNewsList() {
+            try {
+                let url = '/api/news/';
+                if (currentFilter === 'bookmarked') {
+                    url += '?bookmarked=true';
+                }
+
+                const response = await axios.get(url);
+                const newsList = response.data;
+
+                const newsListDiv = document.getElementById('newsList');
+
+                if (newsList.length === 0) {
+                    newsListDiv.innerHTML = '<div class="empty-message">아직 저장된 기사가 없습니다.</div>';
+                    return;
+                }
+
+                newsListDiv.innerHTML = newsList.map(news => `
+                    <div class="news-item" onclick="loadNewsDetail(${news.id})">
+                        <h3>
+                            <span>${news.title}</span>
+                            <span class="bookmark-icon ${news.is_bookmarked ? 'bookmarked' : ''}"
+                                  onclick="event.stopPropagation(); toggleBookmark(${news.id})">
+                                ★
+                            </span>
+                        </h3>
+                        <p>${news.description.substring(0, 100)}...</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // 뉴스 상세 조회
+        async function loadNewsDetail(newsId) {
+            try {
+                currentNewsId = newsId;
+                const response = await axios.get(`/api/news/${newsId}/`);
+                const news = response.data;
+
+                const newsDetailDiv = document.getElementById('newsDetail');
+                newsDetailDiv.innerHTML = `
+                    <h2>${news.title}</h2>
+                    <p class="pub-date">${news.pub_date}</p>
+                    <div class="description">${news.description}</div>
+                    <a href="${news.link}" target="_blank" class="link">원문 보기</a>
+                `;
+
+                // 활성 상태 표시
+                document.querySelectorAll('.news-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                event.currentTarget.classList.add('active');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // 북마크 토글
+        async function toggleBookmark(newsId) {
+            try {
+                await axios.post(`/api/news/${newsId}/bookmark/`);
+                loadNewsList();
+
+                // 상세보기 중인 뉴스라면 다시 로드
+                if (currentNewsId === newsId) {
+                    loadNewsDetail(newsId);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // 필터 전환
+        function filterNews(filter) {
+            currentFilter = filter;
+
+            // 버튼 활성 상태 변경
+            document.querySelectorAll('.btn-filter').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            loadNewsList();
+        }
+
+        // 엔터키로 검색
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchNews();
+            }
+        });
+    </script>
+</body>
+</html>
